@@ -256,6 +256,13 @@ async function run() {
       }
     );
 
+    //-------------- handle payment collection---------
+    app.post("/payment-by-hr", verifyToken, verifyHR, async (req, res) => {
+      let data = req.body;
+      let result = await paymentCollection.insertOne(data);
+      res.send(result);
+    });
+
     ///------------- start of jwt ------------------
     app.post("/jwt", async (req, res) => {
       let user = req.body;
