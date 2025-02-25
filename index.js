@@ -181,6 +181,27 @@ async function run() {
         res.send(result);
       }
     );
+    //------------worksheet starts from here ----------------
+    app.get(
+      "/worksheet-employee/:email",
+      verifyToken,
+      verifyEmployee,
+      async (req, res) => {
+        let email = req.params.email;
+        let filter = { email };
+        let result = await workCollection
+          .find(filter)
+          .sort({ _id: -1 })
+          .toArray();
+        res.send(result);
+      }
+    );
+    //all worksheet to display in hr
+    app.get("/worksheet-hr", verifyToken, verifyHR, async (req, res) => {
+      let result = await workCollection.find().sort({ _id: -1 }).toArray();
+
+      res.send(result);
+    });
 
     ///------------- start of jwt ------------------
     app.post("/jwt", async (req, res) => {
