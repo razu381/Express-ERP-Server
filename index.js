@@ -263,6 +263,34 @@ async function run() {
       res.send(result);
     });
 
+    app.patch(
+      "/paid-by-admin/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        let id = req.params.id;
+        let transactionId = req.body.transactionId;
+        console.log("transaction id = ", transactionId);
+        let filter = { _id: new ObjectId(id) };
+        let updateDoc = {
+          $set: {
+            isPaidByAdmin: true,
+            paidByAdminDate: new Date(),
+            transactionId,
+          },
+        };
+
+        let result = await paymentCollection.updateOne(filter, updateDoc);
+        res.send(result);
+      }
+    );
+
+    //payment by hr for admin
+    app.get("/payment-by-hr", verifyToken, verifyAdmin, async (req, res) => {
+      let result = await paymentCollection.find().toArray();
+      res.send(result);
+    });
+
     ///------------- start of jwt ------------------
     app.post("/jwt", async (req, res) => {
       let user = req.body;
