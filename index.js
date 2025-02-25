@@ -141,6 +141,27 @@ async function run() {
       res.send(result);
     });
 
+    //change role(HR/Fired)
+    app.patch(
+      "/users/change-role/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        let id = req.params.id;
+        let role = req.body.role;
+        let query = { _id: new ObjectId(id) };
+        let updateDoc = {
+          $set: {
+            role,
+          },
+        };
+
+        let result = await usersCollection.updateOne(query, updateDoc);
+
+        res.send(result);
+      }
+    );
+
     ///------------- start of jwt ------------------
     app.post("/jwt", async (req, res) => {
       let user = req.body;
