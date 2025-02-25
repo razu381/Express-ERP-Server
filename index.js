@@ -203,6 +203,59 @@ async function run() {
       res.send(result);
     });
 
+    //post work
+    app.post("/worksheet", verifyToken, verifyEmployee, async (req, res) => {
+      const { date, hours, ...otherData } = req.body;
+
+      let dateObject = new Date(date);
+      let hoursWorked = parseFloat(hours);
+
+      let newWorkData = {
+        ...otherData,
+        date: dateObject,
+        hours: hoursWorked,
+      };
+
+      let result = await workCollection.insertOne(newWorkData);
+
+      res.send(result);
+    });
+    //update work
+    app.put("/worksheet/:id", verifyToken, verifyEmployee, async (req, res) => {
+      let id = req.params.id;
+      const { date, hours, ...otherData } = req.body;
+
+      let dateObject = new Date(date);
+      let hoursWorked = parseFloat(hours);
+
+      let newWorkData = {
+        ...otherData,
+        date: dateObject,
+        hours: hoursWorked,
+      };
+
+      let filter = { _id: new ObjectId(id) };
+      let updateDoc = {
+        $set: newWorkData,
+      };
+
+      let result = await workCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+    //delete work
+    app.delete(
+      "/worksheet/:id",
+      verifyToken,
+      verifyEmployee,
+      async (req, res) => {
+        let id = req.params.id;
+        let query = { _id: new ObjectId(id) };
+
+        let result = await workCollection.deleteOne(query);
+        res.send(result);
+      }
+    );
+
     ///------------- start of jwt ------------------
     app.post("/jwt", async (req, res) => {
       let user = req.body;
