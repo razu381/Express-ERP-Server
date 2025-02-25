@@ -291,6 +291,19 @@ async function run() {
       res.send(result);
     });
 
+    //payment for specific employee for the bar chart in HR
+    app.get(
+      "/payment-by-hr/:email",
+      verifyToken,
+      verifyHR,
+      async (req, res) => {
+        let email = req.params.email;
+        let filter = { email };
+        let result = await paymentCollection.find(filter).toArray();
+        res.send(result);
+      }
+    );
+
     ///------------- start of jwt ------------------
     app.post("/jwt", async (req, res) => {
       let user = req.body;
