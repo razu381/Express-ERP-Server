@@ -4,6 +4,7 @@ var cors = require("cors");
 const jwt = require("jsonwebtoken");
 const app = express();
 const port = 3000;
+const stripe = require("stripe")(process.env.STRIPE_SECRET);
 
 //middlewares
 app.use(cors());
@@ -25,7 +26,7 @@ function verifyToken(req, res, next) {
   });
 }
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.pook9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -50,14 +51,13 @@ async function run() {
     // Get the database and collection on which to run the operation
     const database = client.db("user-management");
     const usersCollection = database.collection("users");
+    const workCollection = database.collection("work");
+    const paymentCollection = database.collection("payments");
 
     //----------- Admin verification -------------
     async function verifyAdmin(req, res, next) {
       let email = req.decoded.email;
-      let query = { email: email };
-      let user = await usersCollection.findOne(query);
-
-      let isAdmin = user?.role === "admin";
+      let isAdmin = req.decoded.role === "Admin";
       if (!isAdmin) {
         return res.status(403).send({ message: "Forbid access" });
       }
@@ -66,11 +66,17 @@ async function run() {
     //----------- HR verification -------------
     async function verifyHR(req, res, next) {
       let email = req.decoded.email;
-      let query = { email: email };
-      let user = await usersCollection.findOne(query);
-
-      let isHR = user?.role === "HR";
+      let isHR = req.decoded.role === "HR";
       if (!isHR) {
+        return res.status(403).send({ message: "Forbid access" });
+      }
+      next();
+    }
+    //----------- Employee verification -------------
+    async function verifyEmployee(req, res, next) {
+      let email = req.decoded.email;
+      let isEmployee = req.decoded.role === "Employee";
+      if (!isEmployee) {
         return res.status(403).send({ message: "Forbid access" });
       }
       next();
@@ -78,36 +84,27 @@ async function run() {
 
     //-------users starts---------------
 
-    app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
-      let result = await usersCollection.find().toArray();
+    app.get("/employees-admin", verifyToken, verifyAdmin, async (req, res) => {
+      let filter = {
+        role: { $in: ["Employee", "HR", "fired"] },
+        isVerified: true,
+      };
+      let result = await usersCollection.find(filter).toArray();
 
+      res.send(result);
+    });
+
+    //get employees HR
+    app.get("/employees-hr", verifyToken, verifyHR, async (req, res) => {
+      let filter = { role: "Employee" };
+      let result = await usersCollection.find(filter).toArray();
       res.send(result);
     });
     app.post("/users", async (req, res) => {
       let data = req.body;
-      //console.log("user post data ", data);
       let result = await usersCollection.insertOne(data);
 
       res.send(result);
-    });
-    //find user by eamil
-    app.get("/users/:email", async (req, res) => {
-      let email = req.params.email;
-      let query = { email };
-
-      let result = await usersCollection.findOne(query);
-      res.send(result);
-    });
-
-    //---------------- check User role by email ----------
-    app.get("/users/role/:email", async (req, res) => {
-      console.log("role was hit");
-      let email = req.params.email;
-      let query = { email };
-
-      let result = await usersCollection.findOne(query);
-
-      res.send({ role: result.role });
     });
 
     ///------------- start of jwt ------------------
