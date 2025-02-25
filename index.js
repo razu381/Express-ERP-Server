@@ -106,6 +106,24 @@ async function run() {
 
       res.send(result);
     });
+    //find user by eamil
+    app.get("/users/:email", async (req, res) => {
+      let email = req.params.email;
+      let query = { email };
+
+      let result = await usersCollection.findOne(query);
+      res.send(result);
+    });
+
+    //---------------- check User role by email ----------
+    app.get("/users/role/:email", async (req, res) => {
+      let email = req.params.email;
+      let query = { email };
+
+      let result = await usersCollection.findOne(query);
+
+      res.send({ role: result?.role });
+    });
 
     ///------------- start of jwt ------------------
     app.post("/jwt", async (req, res) => {
