@@ -125,6 +125,22 @@ async function run() {
       res.send({ role: result?.role });
     });
 
+    //change verification state
+    app.patch("/users/:email", verifyToken, verifyHR, async (req, res) => {
+      let email = req.params.email;
+      let isVerified = req.body.isVerified;
+      let query = { email };
+      let updateDoc = {
+        $set: {
+          isVerified,
+        },
+      };
+
+      let result = await usersCollection.updateOne(query, updateDoc);
+
+      res.send(result);
+    });
+
     ///------------- start of jwt ------------------
     app.post("/jwt", async (req, res) => {
       let user = req.body;
