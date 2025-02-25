@@ -162,6 +162,26 @@ async function run() {
       }
     );
 
+    //change salary
+    app.patch(
+      "/users/salary/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        let id = req.params.id;
+        let salary = parseInt(req.body.salary);
+        let query = { _id: new ObjectId(id) };
+        let updateDoc = {
+          $set: {
+            salary,
+          },
+        };
+
+        let result = await usersCollection.updateOne(query, updateDoc);
+        res.send(result);
+      }
+    );
+
     ///------------- start of jwt ------------------
     app.post("/jwt", async (req, res) => {
       let user = req.body;
