@@ -59,7 +59,7 @@ async function run() {
       let email = req.decoded.email;
       let isAdmin = req.decoded.role === "Admin";
       if (!isAdmin) {
-        return res.status(403).send({ message: "Forbid access" });
+        return res.status(403).send({ message: "Forbidden access" });
       }
       next();
     }
@@ -68,7 +68,7 @@ async function run() {
       let email = req.decoded.email;
       let isHR = req.decoded.role === "HR";
       if (!isHR) {
-        return res.status(403).send({ message: "Forbid access" });
+        return res.status(403).send({ message: "Forbidden access" });
       }
       next();
     }
@@ -188,6 +188,12 @@ async function run() {
       verifyEmployee,
       async (req, res) => {
         let email = req.params.email;
+        let tokenEmail = req.decoded.email;
+
+        if (email != tokenEmail) {
+          return res.status(403).send({ message: "Forbidden access" });
+        }
+
         let filter = { email };
         let result = await workCollection
           .find(filter)
@@ -290,6 +296,38 @@ async function run() {
       let result = await paymentCollection.find().toArray();
       res.send(result);
     });
+    //check for duplicate payment
+    app.post(
+      "/payment-check-paid",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        let paymentInfo = req.body;
+        //console.log("check paid body", paymentInfo);
+        let filter = {
+          email: paymentInfo?.email,
+          month: paymentInfo?.month,
+          year: paymentInfo?.year,
+          isPaidByAdmin: true,
+        };
+        let result = await paymentCollection.findOne(filter);
+
+        console.log("check paid result ", result);
+        if (result) {
+          res.send({
+            isPaid: true,
+            paidByAdminDate: result?.paidByAdminDate,
+            transactionId: result?.transactionId,
+          });
+        } else {
+          res.send({
+            isPaid: false,
+            paidByAdminDate: null,
+            transactionId: null,
+          });
+        }
+      }
+    );
 
     //payment for specific employee for the bar chart in HR
     app.get(
@@ -311,6 +349,14 @@ async function run() {
       verifyEmployee,
       async (req, res) => {
         let email = req.params.email;
+        let tokenEmail = req.decoded.email;
+
+        if (email != tokenEmail) {
+          return res.status(403).send({ message: "Forbidden access" });
+        }
+
+        //console.log(`Email=${email} -- TokenEmail=${tokenEmail}`);
+
         let filter = { email };
         let result = await paymentCollection
           .find(filter)
