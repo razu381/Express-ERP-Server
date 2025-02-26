@@ -22,6 +22,7 @@ function verifyToken(req, res, next) {
       return res.status(401).send({ message: "Unauthorized access" });
     }
     req.decoded = decoded;
+    console.log(decoded);
     next();
   });
 }
@@ -77,7 +78,10 @@ async function run() {
       let email = req.decoded.email;
       let isEmployee = req.decoded.role === "Employee";
       if (!isEmployee) {
+        console.log(req.decoded, "employee couldn't be verified");
         return res.status(403).send({ message: "Forbid access" });
+      } else {
+        console.log("Employee verified");
       }
       next();
     }
