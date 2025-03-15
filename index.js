@@ -213,6 +213,22 @@ async function run() {
       res.send(result);
     });
 
+    //worksheet filter by date in hr
+    //filter queries from oldest to latlest
+    app.get("/query/search/date", async (req, res) => {
+      let query = req.query.q;
+      console.log("Search query was hit", query);
+      let sortOptions;
+      if (query === "latest") {
+        sortOptions = { date: -1 };
+      } else {
+        sortOptions = { date: 1 };
+      }
+
+      let result = await workCollection.find().sort(sortOptions).toArray();
+      res.send(result);
+    });
+
     //post work
     app.post("/worksheet", verifyToken, verifyEmployee, async (req, res) => {
       const { date, hours, ...otherData } = req.body;
